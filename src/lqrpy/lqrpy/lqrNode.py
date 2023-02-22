@@ -27,7 +27,7 @@ class LQR_node(Node):
 
         self.get_logger().info('Curerent State receiver init')
         self.forcePublisher = self.create_publisher(
-            msg_type=Wrench, topic='/rexrov/thruster_manager/input', qos_profile=10)
+            msg_type=Wrench, topic='/'+modelname+'/thruster_manager/input', qos_profile=10)
         self.get_logger().info('Force Publisher init')
         
         self.nextStateService = self.create_service(SetModelState,"/control/set_next_state",self.nextStateReceiveServiceCallBack)
@@ -238,7 +238,7 @@ class LQR_node(Node):
 
 def main(args=None):
     rclpy.init(args=args)
-    node = LQR_node("rexrov")
+    node = LQR_node("swift")
     rclpy.spin(node)
     rclpy.shutdown()
 
