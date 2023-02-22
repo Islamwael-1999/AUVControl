@@ -16,7 +16,7 @@ from lqrpy.LQR import LQR
 
 
 class LQR_node(Node):
-    def __init__(self):
+    def __init__(self,modelname):
         
         super().__init__("node_name")
         # self.stateReceiver = self.create_subscription(
@@ -35,7 +35,7 @@ class LQR_node(Node):
         self.currentState = []
         self.nextState = []
         self.trans = FrameTranformation()
-        self.modelMatricies = ModelMatercies()
+        self.modelMatricies = ModelMatercies(modelname)
         self.BMatrix = self.modelMatricies.calcBMatrix()
 
         self.lqr = LQR()
@@ -214,8 +214,8 @@ class LQR_node(Node):
 
             error = [*relativeBodyPosError, *error[3:6], *relativeBodyVelError]
             u = np.matmul(-k, error)
-            W = 18258
-            B=18522  
+            W = self.modelMatricies.mass*9.81
+            B=self.modelMatricies.rawValue*self.modelMatricies.volume*9.81  
 
             #  0 0 0 -bouyancy*cos(globalState[4])*sin(globalState[3]) -bouyancy*sin(4) 0
             gMatrix = np.array([0,0,-(W-B),0,0,0 ] )
@@ -238,7 +238,7 @@ class LQR_node(Node):
 
 def main(args=None):
     rclpy.init(args=args)
-    node = LQR_node()
+    node = LQR_node("rexrov")
     rclpy.spin(node)
     rclpy.shutdown()
 
