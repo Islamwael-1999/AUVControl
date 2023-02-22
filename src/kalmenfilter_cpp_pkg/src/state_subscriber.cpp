@@ -32,7 +32,7 @@ using MatrixXd = Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>;
 class SubscriberNode : public rclcpp::Node
 {
 public:
-  std::string robot_name="swift";
+  std::string robot_name="rexrov";
   bool isInitialised() const { if(IMU_init && DVL_init && Pressure_init)return true; else return false ;}
   SubscriberNode() : Node("subscriber")
   {
