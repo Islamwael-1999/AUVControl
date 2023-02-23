@@ -43,6 +43,7 @@ class LQR_node(Node):
     def nextStateReceiveServiceCallBack(self,request,response):
         self.nextState = self.ExtractModelState(request.model_state)
         response.success = True
+        self.get_logger().info("New State recieved")
         return response
 
 
@@ -223,6 +224,8 @@ class LQR_node(Node):
             gMatrix = np.array([0,0,-(W-B),0,0,0 ] )
             u=u-gMatrix
             # print('Yaw :',self.currentState[5])
+            print("\nCurrent State:\nx:",globalState[0],"\ny:",globalState[1],'\nYaw:',globalState[5])
+            print("\nNext Point:\nx:",self.nextState[0],"\ny:",self.nextState[1],'\nYaw:',self.nextState[5])
             print('\nError x', error[0], '\nError y', error[1],'\nError z',error[2], '\nError roll',error[3],'\nError Pitch',error[4],'\nError Yaw', error[5] )
 
             print('\nForce x', u[0], '\nForce y ', u[1], '\nForce z', u[2],'\nMoment Roll x', u[3], '\nMoment Pitch y ', u[4], '\nMoment Yaw z', u[5])
