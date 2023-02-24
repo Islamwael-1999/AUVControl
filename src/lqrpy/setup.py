@@ -20,7 +20,9 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            "LQRpy=lqrpy.lqrNode:main"
+            "pixhawk_publisher=lqrpy.pixhawk_publisher:main",
+            "LQRpy=lqrpy.lqrNode:main",
+            "dvl_publisher=lqrpy.dvl_publisher:main"
         ],
     },
 )

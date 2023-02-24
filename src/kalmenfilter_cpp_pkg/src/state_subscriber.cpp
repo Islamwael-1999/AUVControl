@@ -1,11 +1,11 @@
 #include "rclcpp/rclcpp.hpp"
 #include "sensor_msgs/msg/imu.hpp"
-#include "gazebo_msgs/msg/link_states.hpp"
+// #include "gazebo_msgs/msg/link_states.hpp"
 #include "geometry_msgs/msg/twist_with_covariance_stamped.hpp"
-#include "gazebo_msgs/srv/set_entity_state.hpp"
+// #include "gazebo_msgs/srv/set_entity_state.hpp"
 #include "sensor_msgs/msg/fluid_pressure.hpp"
 #include "nav_msgs/msg/odometry.hpp"
-#include "gazebo_msgs/msg/model_states.hpp"
+// #include "gazebo_msgs/msg/model_states.hpp"
 #include <tf2/LinearMath/Quaternion.h>
 #include <tf2/LinearMath/Matrix3x3.h>
 #include <Eigen/Dense>
@@ -51,10 +51,10 @@ public:
                                                                                         std::bind(&SubscriberNode::callbackPressure, this, std::placeholders::_1));
     RCLCPP_INFO(this->get_logger(), "subscriber Pressure initialized");
 
-    Truth_subscriber_ = this->create_subscription<gazebo_msgs::msg::ModelStates>("/gazebo/model_states", 100,
+    // Truth_subscriber_ = this->create_subscription<gazebo_msgs::msg::ModelStates>("/gazebo/model_states", 100,
 
-                                                                                std::bind(&SubscriberNode::callbackGroundTruth, this, std::placeholders::_1));
-    RCLCPP_INFO(this->get_logger(), "subscriber ground truth initialized");
+    //                                                                             std::bind(&SubscriberNode::callbackGroundTruth, this, std::placeholders::_1));
+    // RCLCPP_INFO(this->get_logger(), "subscriber ground truth initialized");
 
     State_publisher_ = this->create_publisher<nav_msgs::msg::Odometry>("/kalmen_filter/state", 100);
 
@@ -67,48 +67,48 @@ public:
    
     
     RCLCPP_INFO(this->get_logger(), "publisher started");
-    Client_ = this->create_client<gazebo_msgs::srv::SetEntityState>("/gazebo/set_entity_state");
-    while(!Client_->wait_for_service(std::chrono::seconds(1))){
-      RCLCPP_WARN(this->get_logger(),"waiting for service to be up....");
-          }
-    RCLCPP_INFO(this->get_logger(), "client created");
+    // Client_ = this->create_client<gazebo_msgs::srv::SetEntityState>("/gazebo/set_entity_state");
+    // while(!Client_->wait_for_service(std::chrono::seconds(1))){
+    //   RCLCPP_WARN(this->get_logger(),"waiting for service to be up....");
+    //       }
+    // RCLCPP_INFO(this->get_logger(), "client created");
     }
-  void update_simulator_state(double px, double py, double pz, double roll, double pitch, double yaw,double vx ,double vy ,double vz ,double vroll ,double vpitch , double vyaw)
-  {
-    auto request = std::make_shared<gazebo_msgs::srv::SetEntityState::Request>();
-    request->state.pose.position.set__x(px);
+  // void update_simulator_state(double px, double py, double pz, double roll, double pitch, double yaw,double vx ,double vy ,double vz ,double vroll ,double vpitch , double vyaw)
+  // {
+  //   auto request = std::make_shared<gazebo_msgs::srv::SetEntityState::Request>();
+  //   request->state.pose.position.set__x(px);
     
-    request->state.pose.position.set__y(py);
-    request->state.pose.position.set__z(pz);
-    request->state.set__name("submarine_z");
-    tf2::Quaternion Q;
+  //   request->state.pose.position.set__y(py);
+  //   request->state.pose.position.set__z(pz);
+  //   request->state.set__name("submarine_z");
+  //   tf2::Quaternion Q;
 
-    Q.setRPY(roll,pitch,yaw);
+  //   Q.setRPY(roll,pitch,yaw);
 
-    Q = Q.normalize();
+  //   Q = Q.normalize();
 
-    request->state.pose.orientation.set__w(Q.getW());
-    request->state.pose.orientation.set__x(Q.getX());
-    request->state.pose.orientation.set__y(Q.getY());
-    request->state.pose.orientation.set__z(Q.getZ());
+  //   request->state.pose.orientation.set__w(Q.getW());
+  //   request->state.pose.orientation.set__x(Q.getX());
+  //   request->state.pose.orientation.set__y(Q.getY());
+  //   request->state.pose.orientation.set__z(Q.getZ());
 
-    state.pose.pose.orientation.set__w(Q.getW());
-    state.pose.pose.orientation.set__x(Q.getX());
-    state.pose.pose.orientation.set__y(Q.getY());
-    state.pose.pose.orientation.set__z(Q.getZ());
-    state.pose.pose.position.set__x(px);
-    state.pose.pose.position.set__y(py);
-    state.pose.pose.position.set__z(pz);
+  //   state.pose.pose.orientation.set__w(Q.getW());
+  //   state.pose.pose.orientation.set__x(Q.getX());
+  //   state.pose.pose.orientation.set__y(Q.getY());
+  //   state.pose.pose.orientation.set__z(Q.getZ());
+  //   state.pose.pose.position.set__x(px);
+  //   state.pose.pose.position.set__y(py);
+  //   state.pose.pose.position.set__z(pz);
     
-    state.twist.twist.linear.set__x(vx *cos(yaw) -  vy *sin(yaw));
-    state.twist.twist.linear.set__y(vy *cos(yaw) +  vx *sin(yaw));
-    state.twist.twist.linear.set__z(vz);
-    state.twist.twist.angular.set__x(vroll);
-    state.twist.twist.angular.set__y(vpitch);
-    state.twist.twist.angular.set__z(vyaw);
+  //   state.twist.twist.linear.set__x(vx *cos(yaw) -  vy *sin(yaw));
+  //   state.twist.twist.linear.set__y(vy *cos(yaw) +  vx *sin(yaw));
+  //   state.twist.twist.linear.set__z(vz);
+  //   state.twist.twist.angular.set__x(vroll);
+  //   state.twist.twist.angular.set__y(vpitch);
+  //   state.twist.twist.angular.set__z(vyaw);
 
-    Client_->async_send_request(request);
-  }
+  //   Client_->async_send_request(request);
+  // }
 
 protected:
 
@@ -739,45 +739,45 @@ protected:
       }
       }
 
-  void callbackGroundTruth(const gazebo_msgs::msg::ModelStates::SharedPtr msg)
-  {
-      tf2::Quaternion q(
-          msg->pose[3].orientation.x,
-          msg->pose[3].orientation.y,
-          msg->pose[3].orientation.z,
-          msg->pose[3].orientation.w);
-      tf2::Matrix3x3 m(q);
-      double roll, pitch, yaw;
-      m.getRPY(roll, pitch, yaw);
+  // void callbackGroundTruth(const gazebo_msgs::msg::ModelStates::SharedPtr msg)
+  // {
+  //     tf2::Quaternion q(
+  //         msg->pose[3].orientation.x,
+  //         msg->pose[3].orientation.y,
+  //         msg->pose[3].orientation.z,
+  //         msg->pose[3].orientation.w);
+  //     tf2::Matrix3x3 m(q);
+  //     double roll, pitch, yaw;
+  //     m.getRPY(roll, pitch, yaw);
 
-      x_position_error = state_vector(0) -        msg->pose[3].position.x;
-      y_position_error = state_vector(1) -        msg->pose[3].position.y;
-      z_position_error = state_vector(2) -        msg->pose[3].position.z;
-      x_orientation_error = state_vector(6) -     roll;
-      y_orientation_error = state_vector(7) -     pitch;
-      z_orientation_error = state_vector(8) -     yaw;
-      x_linear_velocity_error = state_vector(3) - msg->twist[3].linear.x;
-      y_linear_velocity_error = state_vector(4) - msg->twist[3].linear.y;
-      z_linear_velocity_error = state_vector(5) - msg->twist[3].linear.z;
-      x_linear_angular_error = state_vector(9) -  msg->twist[3].angular.x;
-      y_linear_angular_error = state_vector(10) - msg->twist[3].angular.y;
-      z_linear_angular_error = state_vector(11) - msg->twist[3].angular.z;
+  //     x_position_error = state_vector(0) -        msg->pose[3].position.x;
+  //     y_position_error = state_vector(1) -        msg->pose[3].position.y;
+  //     z_position_error = state_vector(2) -        msg->pose[3].position.z;
+  //     x_orientation_error = state_vector(6) -     roll;
+  //     y_orientation_error = state_vector(7) -     pitch;
+  //     z_orientation_error = state_vector(8) -     yaw;
+  //     x_linear_velocity_error = state_vector(3) - msg->twist[3].linear.x;
+  //     y_linear_velocity_error = state_vector(4) - msg->twist[3].linear.y;
+  //     z_linear_velocity_error = state_vector(5) - msg->twist[3].linear.z;
+  //     x_linear_angular_error = state_vector(9) -  msg->twist[3].angular.x;
+  //     y_linear_angular_error = state_vector(10) - msg->twist[3].angular.y;
+  //     z_linear_angular_error = state_vector(11) - msg->twist[3].angular.z;
 
-      real_x_position = msg->pose[3].position.x;
-      real_y_position = msg->pose[3].position.y;
-      real_z_position = msg->pose[3].position.z;
-      real_x_orientation = roll;
-      real_y_orientation = pitch;
-      real_z_orientation = yaw;
-      real_x_linear_velocity = msg->twist[3].linear.x;
-      real_y_linear_velocity = msg->twist[3].linear.y;
-      real_z_linear_velocity = msg->twist[3].linear.z;
-      real_x_linear_angular = msg->twist[3].angular.x;
-      real_y_linear_angular = msg->twist[3].angular.y;
-      real_z_linear_angular = msg->twist[3].angular.z;
+  //     real_x_position = msg->pose[3].position.x;
+  //     real_y_position = msg->pose[3].position.y;
+  //     real_z_position = msg->pose[3].position.z;
+  //     real_x_orientation = roll;
+  //     real_y_orientation = pitch;
+  //     real_z_orientation = yaw;
+  //     real_x_linear_velocity = msg->twist[3].linear.x;
+  //     real_y_linear_velocity = msg->twist[3].linear.y;
+  //     real_z_linear_velocity = msg->twist[3].linear.z;
+  //     real_x_linear_angular = msg->twist[3].angular.x;
+  //     real_y_linear_angular = msg->twist[3].angular.y;
+  //     real_z_linear_angular = msg->twist[3].angular.z;
 
 
-  }
+  // }
   void publishNews()
   {
     // RCLCPP_INFO(this->get_logger(), "position      in x:[%f],y:[%f],z:[%f]",
@@ -862,18 +862,18 @@ protected:
  //             y_linear_angular_error,
  //             z_linear_angular_error);
 
- update_simulator_state(state_vector(0),
-                        state_vector(1),
-                        state_vector(2),
-                        state_vector(6),
-                        state_vector(7),
-                        state_vector(8),
-                        state_vector(3),
-                        state_vector(4),
-                        state_vector(5),
-                        state_vector(9),
-                        state_vector(10),
-                        state_vector(11));
+//  update_simulator_state(state_vector(0),
+//                         state_vector(1),
+//                         state_vector(2),
+//                         state_vector(6),
+//                         state_vector(7),
+//                         state_vector(8),
+//                         state_vector(3),
+//                         state_vector(4),
+//                         state_vector(5),
+//                         state_vector(9),
+//                         state_vector(10),
+//                         state_vector(11));
  // tf2::Quaternion myQuaternion;
 
  // myQuaternion.setRPY(state_vector(6), state_vector(7), state_vector(8));
@@ -919,11 +919,11 @@ double real_z_linear_angular  ;
   rclcpp::Subscription<sensor_msgs::msg::Imu>::SharedPtr IMU_subscriber_;
   rclcpp::Subscription<geometry_msgs::msg::TwistWithCovarianceStamped>::SharedPtr DVL_subscriber_;
   rclcpp::Subscription<sensor_msgs::msg::FluidPressure>::SharedPtr Pressure_subscriber_;
-  rclcpp::Subscription<gazebo_msgs::msg::ModelStates>::SharedPtr Truth_subscriber_;
+  // rclcpp::Subscription<gazebo_msgs::msg::ModelStates>::SharedPtr Truth_subscriber_;
   rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr State_publisher_;
   rclcpp::TimerBase::SharedPtr timer_;
   rclcpp::TimerBase::SharedPtr timer_prediction_;
-  rclcpp::Client<gazebo_msgs::srv::SetEntityState>::SharedPtr Client_;
+  // rclcpp::Client<gazebo_msgs::srv::SetEntityState>::SharedPtr Client_;
 };
 
 int main(int argc, char **argv)
