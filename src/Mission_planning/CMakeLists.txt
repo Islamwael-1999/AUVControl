@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 3.5)
-project(sensor_data_bringup)
+project(Mission_planning)
+
 
 
 # Default to C++14
@@ -14,10 +15,18 @@ endif()
 # find dependencies
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
+find_package(uuv_control_msgs REQUIRED)
 
-install(DIRECTORY
-  launch
-  DESTINATION share/${PROJECT_NAME}
+
+add_executable(set_waypoint src/set_waypoint.cpp )
+
+ament_target_dependencies( set_waypoint uuv_control_msgs  rclcpp )
+
+
+install(TARGETS
+
+  set_waypoint
+  DESTINATION lib/${PROJECT_NAME}
   )
 
 ament_package()
