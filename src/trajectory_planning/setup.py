@@ -20,7 +20,8 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            "trajectoryPlanner = trajectory_planning.trajectoryNode:main"
+            "dubinsPath = trajectory_planning.dubinsPath:main",
+            "cubicPath = trajectory_planning.cubicPath:main"
         ],
     },
 )

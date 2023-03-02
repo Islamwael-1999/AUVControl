@@ -6,8 +6,8 @@ import os
 class ModelMatercies:
     # modeldata is filename where the matercies MRA and MRB are saved
     def __init__(self):
-        modelData = ["/home/islams/AUVControl/src/lqrpy/lqrpy/MRB.txt", "/home/islams/AUVControl/src/lqrpy/lqrpy/MA.txt", "/home/islams/AUVControl/src/lqrpy/lqrpy/linearDamping.txt",
-                     "/home/islams/AUVControl/src/lqrpy/lqrpy/QuadraticDamping.txt"]
+        modelData = ["/home/aly/vortex/AUVControl/src/lqrpy/lqrpy/MRB.txt", "/home/aly/vortex/AUVControl/src/lqrpy/lqrpy/MA.txt", "/home/aly/vortex/AUVControl/src/lqrpy/lqrpy/linearDamping.txt",
+                     "/home/aly/vortex/AUVControl/src/lqrpy/lqrpy/QuadraticDamping.txt"]
         self.MRB = self.loadMassMatrix(modelData[0])
         self.MA = self.loadMassMatrix(modelData[1])
         self.LD = self.LinearDampingMatrix(modelData[2])

@@ -19,11 +19,11 @@ class LQR_node(Node):
     def __init__(self):
         
         super().__init__("node_name")
-        # self.stateReceiver = self.create_subscription(
-        #     ModelStates, '/gazebo/model_states', self.stateReceiveCallBack, 10)       #Extract Ground Truth (ModelStates) Message Subscriber
+        self.stateReceiver = self.create_subscription(
+            ModelStates, '/gazebo/model_states', self.stateReceiveCallBack, 10)       #Extract Ground Truth (ModelStates) Message Subscriber
         self.is_initialized=False
-        self.sensorFusionStateReceiver = self.create_subscription(
-            Odometry, '/kalmen_filter/state', self.stateReceiveCallBack, 10)            #Estimated State (Odometry) Message Subscriber 
+        # self.sensorFusionStateReceiver = self.create_subscription(
+        #     Odometry, '/kalmen_filter/state', self.stateReceiveCallBack, 10)            #Estimated State (Odometry) Message Subscriber 
 
         self.get_logger().info('Curerent State receiver init')
         self.forcePublisher = self.create_publisher(
@@ -43,7 +43,7 @@ class LQR_node(Node):
     def nextStateReceiveServiceCallBack(self,request,response):
         self.nextState = self.ExtractModelState(request.model_state)
         response.success = True
-        self.get_logger().info("New State recieved")
+        # self.get_logger().info("New State recieved")
         return response
 
 
@@ -156,15 +156,15 @@ class LQR_node(Node):
 
     def stateReceiveCallBack(self, state):
         if self.is_initialized == False:
-            # globalState = self.ExtractGroundTruth(state)  # Extract GroundTruth
-            globalState = self.ExtractOdometryState(state)
+            globalState = self.ExtractGroundTruth(state)  # Extract GroundTruth
+            # globalState = self.ExtractOdometryState(state)
             self.currentState = globalState
             self.nextState = globalState
             self.is_initialized = True
         
         else:
-            # globalState = self.ExtractGroundTruth(state)  # Extract GroundTruth
-            globalState = self.ExtractOdometryState(state)
+            globalState = self.ExtractGroundTruth(state)  # Extract GroundTruth
+            # globalState = self.ExtractOdometryState(state)
 
             self.trans.defineNedAngles(globalState[3:6])
             self.vel = self.trans.Transform(np.array(globalState[6:]))
