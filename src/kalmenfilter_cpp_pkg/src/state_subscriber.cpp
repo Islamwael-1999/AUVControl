@@ -32,7 +32,7 @@ using MatrixXd = Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>;
 class SubscriberNode : public rclcpp::Node
 {
 public:
-  std::string robot_name="swift";
+  std::string robot_name="rexrov";
   bool isInitialised() const { if(IMU_init && DVL_init && Pressure_init)return true; else return false ;}
   SubscriberNode() : Node("subscriber")
   {
@@ -743,39 +743,39 @@ protected:
   void callbackGroundTruth(const gazebo_msgs::msg::ModelStates::SharedPtr msg)
   {
       tf2::Quaternion q(
-          msg->pose[3].orientation.x,
-          msg->pose[3].orientation.y,
-          msg->pose[3].orientation.z,
-          msg->pose[3].orientation.w);
+          msg->pose[2].orientation.x,
+          msg->pose[2].orientation.y,
+          msg->pose[2].orientation.z,
+          msg->pose[2].orientation.w);
       tf2::Matrix3x3 m(q);
       double roll, pitch, yaw;
       m.getRPY(roll, pitch, yaw);
 
-      x_position_error = state_vector(0) -        msg->pose[3].position.x;
-      y_position_error = state_vector(1) -        msg->pose[3].position.y;
-      z_position_error = state_vector(2) -        msg->pose[3].position.z;
+      x_position_error = state_vector(0) -        msg->pose[2].position.x;
+      y_position_error = state_vector(1) -        msg->pose[2].position.y;
+      z_position_error = state_vector(2) -        msg->pose[2].position.z;
       x_orientation_error = state_vector(6) -     roll;
       y_orientation_error = state_vector(7) -     pitch;
       z_orientation_error = state_vector(8) -     yaw;
-      x_linear_velocity_error = state_vector(3) - msg->twist[3].linear.x;
-      y_linear_velocity_error = state_vector(4) - msg->twist[3].linear.y;
-      z_linear_velocity_error = state_vector(5) - msg->twist[3].linear.z;
-      x_linear_angular_error = state_vector(9) -  msg->twist[3].angular.x;
-      y_linear_angular_error = state_vector(10) - msg->twist[3].angular.y;
-      z_linear_angular_error = state_vector(11) - msg->twist[3].angular.z;
+      x_linear_velocity_error = state_vector(3) - msg->twist[2].linear.x;
+      y_linear_velocity_error = state_vector(4) - msg->twist[2].linear.y;
+      z_linear_velocity_error = state_vector(5) - msg->twist[2].linear.z;
+      x_linear_angular_error = state_vector(9) -  msg->twist[2].angular.x;
+      y_linear_angular_error = state_vector(10) - msg->twist[2].angular.y;
+      z_linear_angular_error = state_vector(11) - msg->twist[2].angular.z;
 
-      real_x_position = msg->pose[3].position.x;
-      real_y_position = msg->pose[3].position.y;
-      real_z_position = msg->pose[3].position.z;
+      real_x_position = msg->pose[2].position.x;
+      real_y_position = msg->pose[2].position.y;
+      real_z_position = msg->pose[2].position.z;
       real_x_orientation = roll;
       real_y_orientation = pitch;
       real_z_orientation = yaw;
-      real_x_linear_velocity = msg->twist[3].linear.x;
-      real_y_linear_velocity = msg->twist[3].linear.y;
-      real_z_linear_velocity = msg->twist[3].linear.z;
-      real_x_linear_angular = msg->twist[3].angular.x;
-      real_y_linear_angular = msg->twist[3].angular.y;
-      real_z_linear_angular = msg->twist[3].angular.z;
+      real_x_linear_velocity = msg->twist[2].linear.x;
+      real_y_linear_velocity = msg->twist[2].linear.y;
+      real_z_linear_velocity = msg->twist[2].linear.z;
+      real_x_linear_angular = msg->twist[2].angular.x;
+      real_y_linear_angular = msg->twist[2].angular.y;
+      real_z_linear_angular = msg->twist[2].angular.z;
 
 
   }
