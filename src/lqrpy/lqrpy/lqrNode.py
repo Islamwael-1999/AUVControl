@@ -250,7 +250,7 @@ class LQR_node(Node):
             u = np.matmul(-k, error)
             W = self.modelMatricies.mass*9.81
             B = self.modelMatricies.rawValue*self.modelMatricies.volume*9.81
-
+            print("Nothing")
             #  0 0 0 -bouyancy*cos(globalState[4])*sin(globalState[3]) -bouyancy*sin(4) 0
             gMatrix = np.array([0, 0, -(W-B), 0, 0, 0])
             u = u-gMatrix
