@@ -5,12 +5,13 @@ import os
 class ModelMatercies:
     # modeldata is filename where the matercies MRA and MRB are saved
     def __init__(self, modelname):
+        cwd = os.getcwd()
         modelData = [
-            "/home/islams/AUVControl/src/lqrpy/lqrpy/"+modelname+"/ModelSpecs.txt",
-            "/home/islams/AUVControl/src/lqrpy/lqrpy/"+modelname+"/Inertia.txt",
-            "/home/islams/AUVControl/src/lqrpy/lqrpy/"+modelname+"/MA.txt",
-            "/home/islams/AUVControl/src/lqrpy/lqrpy/"+modelname+"/LinearDamping.txt",
-            "/home/islams/AUVControl/src/lqrpy/lqrpy/"+modelname+"/QuadraticDamping.txt"
+            cwd+"/src/lqrpy/lqrpy/"+modelname+"/ModelSpecs.txt",
+            cwd+"/src/lqrpy/lqrpy/"+modelname+"/Inertia.txt",
+            cwd+"/src/lqrpy/lqrpy/"+modelname+"/MA.txt",
+            cwd+"/src/lqrpy/lqrpy/"+modelname+"/LinearDamping.txt",
+            cwd+"/src/lqrpy/lqrpy/"+modelname+"/QuadraticDamping.txt"
         ]
 
         self.mass, self.volume, self.rawValue = self.readVehicleSpecs(
@@ -125,3 +126,6 @@ class ModelMatercies:
         Minv = np.linalg.inv(M)
         B = np.vstack((np.zeros((6, 6)), Minv))
         return B
+
+cwd = os.getcwd()
+print(cwd)
