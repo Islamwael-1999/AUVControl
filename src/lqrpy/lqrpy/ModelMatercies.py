@@ -7,11 +7,11 @@ class ModelMatercies:
     def __init__(self, modelname):
         cwd = os.getcwd()
         modelData = [
-            cwd+"/src/lqrpy/lqrpy/"+modelname+"/ModelSpecs.txt",
-            cwd+"/src/lqrpy/lqrpy/"+modelname+"/Inertia.txt",
-            cwd+"/src/lqrpy/lqrpy/"+modelname+"/MA.txt",
-            cwd+"/src/lqrpy/lqrpy/"+modelname+"/LinearDamping.txt",
-            cwd+"/src/lqrpy/lqrpy/"+modelname+"/QuadraticDamping.txt"
+            cwd+"/AUVControl/src/lqrpy/lqrpy/"+modelname+"/ModelSpecs.txt",
+            cwd+"/AUVControl/src/lqrpy/lqrpy/"+modelname+"/Inertia.txt",
+            cwd+"/AUVControl/src/lqrpy/lqrpy/"+modelname+"/MA.txt",
+            cwd+"/AUVControl/src/lqrpy/lqrpy/"+modelname+"/LinearDamping.txt",
+            cwd+"/AUVControl/src/lqrpy/lqrpy/"+modelname+"/QuadraticDamping.txt"
         ]
 
         self.mass, self.volume, self.rawValue = self.readVehicleSpecs(
@@ -126,6 +126,3 @@ class ModelMatercies:
         Minv = np.linalg.inv(M)
         B = np.vstack((np.zeros((6, 6)), Minv))
         return B
-
-cwd = os.getcwd()
-print(cwd)
