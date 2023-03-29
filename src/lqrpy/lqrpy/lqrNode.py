@@ -248,8 +248,10 @@ class LQR_node(Node):
 
             error = [*relativeBodyPosError, *error[3:6], *relativeBodyVelError]
             u = np.matmul(-k, error)
-            W = 18258
-            B=18522  
+
+            W = self.modelMatricies.mass*9.81
+            B = self.modelMatricies.rawValue*self.modelMatricies.volume*9.81
+            print("Nothing")
 
             #  0 0 0 -bouyancy*cos(globalState[4])*sin(globalState[3]) -bouyancy*sin(4) 0
             gMatrix = np.array([0, 0, -(W-B), 0, 0, 0])
