@@ -10,6 +10,7 @@ from gazebo_msgs.srv import SetModelState
 from nav_msgs.msg import Odometry
 import transformations
 from gazebo_msgs.msg import ModelStates
+
 from functools import partial
 import time
 from math import pi
@@ -29,7 +30,7 @@ class CubicPath(Node):
             ModelStates, '/gazebo/model_states', self.stateReceiveCallBack, 10)       #Extract Ground Truth (ModelStates) Message Subscriber
         # self.sensorFusionStateReceiver = self.create_subscription(
         #     Odometry, '/kalmen_filter/state', self.stateReceiveCallBack, 10)            #Estimated State (Odometry) Message Subscriber 
-
+        # self.initWayPointsService = self.create_service(MultiArrayLayout,"/trajectory/initwaypoints",self.initWayPointsServiceCallBack)
         self.sendTargetStateClient = self.create_client(srv_type=SetModelState,srv_name="/control/set_next_state")
         while not self.sendTargetStateClient.wait_for_service(1.0):
             self.get_logger().warn("Waiting For Control Module...")
@@ -142,7 +143,8 @@ class CubicPath(Node):
         # future.add_done_callback(
         #     partial(self.sendTargetStateClient.callBack_to_Response_Recieve)
         # )
-
+    def initWayPointsServiceCallBack(self,msg):
+        print(msg)
     def publishNextTargetState(self):
         i=0
         self.sendNextTarget(self.path[0])
