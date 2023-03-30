@@ -1,19 +1,55 @@
 import numpy as np
-from lqrpy.LQR import LQR
 import os
 
 
 class ModelMatercies:
     # modeldata is filename where the matercies MRA and MRB are saved
-    def __init__(self):
-        modelData = ["/home/islams/AUVControl/src/lqrpy/lqrpy/MRB.txt", "/home/islams/AUVControl/src/lqrpy/lqrpy/MA.txt", "/home/islams/AUVControl/src/lqrpy/lqrpy/linearDamping.txt",
-                     "/home/islams/AUVControl/src/lqrpy/lqrpy/QuadraticDamping.txt"]
-        self.MRB = self.loadMassMatrix(modelData[0])
-        self.MA = self.loadMassMatrix(modelData[1])
-        self.LD = self.LinearDampingMatrix(modelData[2])
-        self.QD = self.QuadraticDampingMatrix(modelData[3])
+    def __init__(self, modelname):
+        cwd = os.getcwd()
+        modelData = [
+            cwd+"/AUVControl/src/lqrpy/lqrpy/"+modelname+"/ModelSpecs.txt",
+            cwd+"/AUVControl/src/lqrpy/lqrpy/"+modelname+"/Inertia.txt",
+            cwd+"/AUVControl/src/lqrpy/lqrpy/"+modelname+"/MA.txt",
+            cwd+"/AUVControl/src/lqrpy/lqrpy/"+modelname+"/LinearDamping.txt",
+            cwd+"/AUVControl/src/lqrpy/lqrpy/"+modelname+"/QuadraticDamping.txt"
+        ]
 
-    def loadMassMatrix(self, filename):
+        self.mass, self.volume, self.rawValue = self.readVehicleSpecs(
+            modelData[0])
+        self.inertiaMat = self.loadInertiaMatrix(modelData[1])
+        self.MA = self.loadAddedMassMatrix(modelData[2])
+        self.LD = self.LinearDampingMatrix(modelData[3])
+        self.QD = self.QuadraticDampingMatrix(modelData[4])
+        self.MRB = self.calcMrbMatrix()
+
+    def readVehicleSpecs(self, filename):
+        f = open(file=filename, mode="r")
+        row = f.readline()
+        row = np.fromstring(string=row, dtype=np.float32, sep=" ")
+        f.close()
+        return (row[0], row[1], row[2])
+
+    def calcMrbMatrix(self):
+        zeros = np.zeros(shape=(3, 3), dtype=np.float32)
+        massSubMatrix = np.eye(N=3)*self.mass
+        M = np.hstack((massSubMatrix, zeros))
+        inertiaSubMat = np.hstack((zeros, self.inertiaMat))
+        M = np.vstack((np.float32(M), np.float32(inertiaSubMat)))
+        return M
+
+    def loadInertiaMatrix(self, filename):
+        f = open(file=filename, mode="r")
+        for i in range(0, 3):
+            row = f.readline()
+            row = np.fromstring(string=row, dtype=np.float32, sep=" ")
+            if(i == 0):
+                I = np.array(row, np.float32)
+            else:
+                I = np.vstack((I, row))
+        f.close()
+        return I
+
+    def loadAddedMassMatrix(self, filename):
         f = open(file=filename, mode="r")
         for i in range(0, 6):
             row = f.readline()
@@ -22,6 +58,7 @@ class ModelMatercies:
                 M = np.array(row, np.float32)
             else:
                 M = np.vstack((M, row))
+        f.close()
         return M
 
     def skew(self, vect):
@@ -50,11 +87,13 @@ class ModelMatercies:
     def LinearDampingMatrix(self, filename):
         f = open(filename, "r")
         D = np.fromstring(string=f.readline(), dtype=np.float32, sep=" ")
+        f.close()
         return D
 
     def QuadraticDampingMatrix(self, filename):
         f = open(filename, "r")
         D = np.fromstring(string=f.readline(), dtype=np.float32, sep=" ")
+        f.close()
         return D
 
     def CalcDamping(self, linearMat, QuadMat, v):
@@ -87,12 +126,3 @@ class ModelMatercies:
         Minv = np.linalg.inv(M)
         B = np.vstack((np.zeros((6, 6)), Minv))
         return B
-
-
-m = ModelMatercies()
-v = np.array([2, 2, 0, 0, 0, 0])
-lqr = LQR()
-lqr.CalculateLQR(m.calcAMatrix(
-    v), m.calcBMatrix(), np.eye(12, 12), np.eye(6, 6))
-print(lqr.getLQRGain().shape)
-# print(lqr.checkControlability(m.calcAMatrix(v), m.calcBMatrix()))
