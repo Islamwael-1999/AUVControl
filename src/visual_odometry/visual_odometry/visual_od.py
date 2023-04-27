@@ -21,9 +21,9 @@ class VisualOdometry(Node):
         super().__init__('Visual_Odometry')
         self.get_logger().info('Visual Odometry init')
         self.P = np.zeros((3,4))
-        self.x = 0
-        self.y = 0
-        self.z = 0
+        # self.x = 0
+        # self.y = 0
+        # self.z = 0
         self.trajectoryArray = []
         self.image_left = []
         self.image_plus1 = []
@@ -32,13 +32,13 @@ class VisualOdometry(Node):
                                     depth=10, #number of messages in a buffer
                                     reliability=QoSReliabilityPolicy.BEST_EFFORT, #To make it always work at best
                                     durability=QoSDurabilityPolicy.VOLATILE)
-        self.groundTruth = self.create_subscription(Odometry,"/swift/pose_gt",self.odometry_receive_callback,10)
+        #self.groundTruth = self.create_subscription(Odometry,"/swift/pose_gt",self.odometry_receive_callback,10)
         self.cameraLeftSubscriber = self.create_subscription(CameraInfo,"/swift/zed2/depth_cam_info_demo",self.camera_receive_callback,camerainfo_qos)
         #self.imageSubscriber = self.create_subscription(Image,"/swift/zed2/image_demo",self.image_receive_callback,10)
         #self.imageDepthSubscriber = self.create_subscription(Image,"/swift/zed2/depth_demo",self.imageDepth_receive_callback,10)
         self.imageSubscriber = message_filters.Subscriber(self,Image,"/swift/zed2/image_demo")
         self.imageDepthSubscriber = message_filters.Subscriber(self,Image,"/swift/zed2/depth_demo")
-        ts = message_filters.TimeSynchronizer([self.imageSubscriber, self.imageDepthSubscriber], queue_size=10)
+        ts = message_filters.TimeSynchronizer([self.imageSubscriber, self.imageDepthSubscriber], queue_size=2)
         ts.registerCallback(self.synchronized_callback)
         self.get_logger().info('Subscriber init')
         self.bridge = CvBridge()
@@ -55,10 +55,10 @@ class VisualOdometry(Node):
             self.image_plus1 = cv_img
             time.sleep(0.3)
            
-    def odometry_receive_callback(self,msg):
-        self.x = msg.pose.pose.position.x
-        self.y = msg.pose.pose.position.y
-        self.z = msg.pose.pose.position.z
+    # def odometry_receive_callback(self,msg):
+    #     self.x = msg.pose.pose.position.x
+    #     self.y = msg.pose.pose.position.y
+    #     self.z = msg.pose.pose.position.z
         
     def camera_receive_callback(self,msg):
         self.P= msg.p.reshape((3,4))
@@ -93,7 +93,7 @@ class VisualOdometry(Node):
             index_params = dict(algorithm = FLANN_INDEX_KDTREE, trees = 5)
             search_params = dict(checks = 50)
             matcher = cv2.FlannBasedMatcher_create(index_params,search_params)
-        
+
         if detector == 'sift' or detector == 'orb':
             matches = matcher.knnMatch(des1,des2,k=k)
         elif detector == 'akaze':
@@ -106,12 +106,12 @@ class VisualOdometry(Node):
                 matches = sorted(matches , key =lambda x: x[0].distance)
         return matches
     
-    def visualize_matches(self,image1, kp1, images2, kp2, match):
-        image_matches = cv2.drawMatches(image1, kp1, images2, kp2, match, None , flags=2)
-        plt.close()
-        plt.figure(figsize= (16,6), dpi= 100)
-        plt.imshow(image_matches)
-        plt.pause(5)
+    # def visualize_matches(self,image1, kp1, images2, kp2, match):
+    #     image_matches = cv2.drawMatches(image1, kp1, images2, kp2, match, None , flags=2)
+    #     plt.close()
+    #     plt.figure(figsize= (16,6), dpi= 100)
+    #     plt.imshow(image_matches)
+    #     plt.pause(5)
 
     def filter_matches_distance(self,detector, matches, dist_threshold = 0.45):
         filtered_matches = []
@@ -156,6 +156,8 @@ class VisualOdometry(Node):
         
         image1_points = np.delete(image1_points, delete, 0)
         image2_points = np.delete(image2_points, delete, 0)
+        if len(image2_points)<10 or len(object_points)<10:
+            return None,None
 
         #_, rvec, tvec, inliers = cv2.solvePnPRansac(object_points, image2_points, k, None,useExtrinsicGuess=True,reprojectionError=5,confidence=0.95)
         _, rvec, tvec, inliers = cv2.solvePnPRansac(object_points, image2_points, k, None)
@@ -168,16 +170,18 @@ class VisualOdometry(Node):
         #print(tvec)
         rmat = cv2.Rodrigues(rvec)[0] #changes from matrix to vector
 
-        return rmat, tvec, image1_points, image2_points
+        return rmat, tvec
 
     def visual_odometry(self,detector = 'akaze', matching = 'BF', filter_match_distance= 0.45):
         time.sleep(0.1)
-        while self.P[0][0] == 0 and (self.x==0 or self.y==0 or self.z==0):
+        # while self.P[0][0] == 0 and (self.x==0 or self.y==0 or self.z==0):
+        #     pass
+        while self.P[0][0] == 0:
             pass
-        new_x = float(self.x)
-        new_y = float(self.y)
-        new_z = float(self.z)
-        T_tot = np.asarray((1,0,0,new_x,0,1,0,new_y,0,0,1,new_z,0,0,0,1),dtype = float).reshape(4,4)
+        # new_x = float(self.x)
+        # new_y = float(self.y)
+        # new_z = float(self.z)
+        T_tot = np.asarray((1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1),dtype = float).reshape(4,4)
         #print(T_tot)
         self.trajectoryArray.append(T_tot[:3, :])
         #print(self.P)
@@ -192,36 +196,51 @@ class VisualOdometry(Node):
 
             kp0, des0 = self.extract_features(self.image_left, detector)
             kp1, des1 = self.extract_features(self.image_plus1, detector)
+            if des1 is None or des0 is None or kp0 is None or kp1 is None:
+                self.depth = []
+                self.image_left = []
+                self.image_plus1 = []
+                #print("entered first if")
+                continue
 
             matches_unfilt = self.match_features(des0, des1, matching=matching, detector=detector)
-
+            
             if filter_match_distance is not None:
                 matches = self.filter_matches_distance(detector,matches_unfilt, filter_match_distance)
             else:
                 matches = matches_unfilt
 
-            rmat, tvec, _, _ = self.estimate_motion(matches, kp0, kp1, k, self.depth)
-            #print('delta x = ' + str(tvec[0][0]))
-            #print('delta y = ' + str(tvec[1][0]))
-            #print('delta z = ' + str(tvec[2][0]))  
-            Tmat = np.eye(4)
-            Tmat[:3, :3] = rmat
-            Tmat[:3, 3] = tvec.T
+            rmat, tvec = self.estimate_motion(matches, kp0, kp1, k, self.depth)
+            if tvec is None:
+                self.depth = []
+                self.image_left = []
+                self.image_plus1 = []
+                continue
+            
+            print('delta x = ' + str(tvec[0][0]))
+            print('delta y = ' + str(tvec[1][0]))
+            print('delta z = ' + str(tvec[2][0]))  
+            # Tmat = np.eye(4)
+            # Tmat[:3, :3] = rmat
+            # Tmat[:3, 3] = tvec.T
 
-            T_tot = T_tot.dot(np.linalg.inv(Tmat))
-            self.trajectoryArray.append(T_tot[:3, :])
-            print("x = "+ str(self.trajectoryArray[len(self.trajectoryArray)-1][0,3]))
-            print("y = "+ str(self.trajectoryArray[len(self.trajectoryArray)-1][1,3]))
-            print("z = "+ str(self.trajectoryArray[len(self.trajectoryArray)-1][2,3]))
+            # T_tot = T_tot.dot(np.linalg.inv(Tmat))
+            # self.trajectoryArray.append(T_tot[:3, :])
+            # print("x = "+ str(self.trajectoryArray[len(self.trajectoryArray)-1][0,3]))
+            # print("y = "+ str(self.trajectoryArray[len(self.trajectoryArray)-1][1,3]))
+            # print("z = "+ str(self.trajectoryArray[len(self.trajectoryArray)-1][2,3]))
             print("len of depth array = " + str(len(self.depth)))
             #print("shape of image = " + str(self.image_left.shape))
             #print("shape of image plus 1 = " + str(self.image_plus1.shape))
-            print("Error in x = " + str(abs(self.x - self.trajectoryArray[len(self.trajectoryArray)-1][0,3])))
-            print("Error in y = " + str(abs(self.y - self.trajectoryArray[len(self.trajectoryArray)-1][1,3])))
-            print("Error in z = " + str(abs(self.z - self.trajectoryArray[len(self.trajectoryArray)-1][2,3])))
+            # print("Error in x = " + str(abs(self.x - self.trajectoryArray[len(self.trajectoryArray)-1][0,3])))
+            # print("Error in y = " + str(abs(self.y - self.trajectoryArray[len(self.trajectoryArray)-1][1,3])))
+            # print("Error in z = " + str(abs(self.z - self.trajectoryArray[len(self.trajectoryArray)-1][2,3])))
             self.depth.pop(0)
             self.image_left = self.image_plus1
             self.image_plus1 = []
+            # self.depth = []
+            # self.image_left = []
+            # self.image_plus1 = []
             
 def main(args=None):
     rclpy.init(args=args)
