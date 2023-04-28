@@ -14,6 +14,7 @@ import matplotlib.pyplot as plt
 import threading
 import time
 import message_filters
+from nav_msgs.msg import Odometry
 
 
 class VisualOdometry(Node): 
@@ -41,6 +42,7 @@ class VisualOdometry(Node):
         ts = message_filters.TimeSynchronizer([self.imageSubscriber, self.imageDepthSubscriber], queue_size=2)
         ts.registerCallback(self.synchronized_callback)
         self.get_logger().info('Subscriber init')
+        self.position_publisher_ =self.create_publisher(Odometry,"VO_position",100)
         self.bridge = CvBridge()
         x = threading.Thread(target=self.visual_odometry)
         x.start()
@@ -238,6 +240,10 @@ class VisualOdometry(Node):
             self.depth.pop(0)
             self.image_left = self.image_plus1
             self.image_plus1 = []
+            position_msg = Odometry()
+            position_msg.pose.pose._position.x=self.trajectoryArray[len(self.trajectoryArray)-1][0,3]
+            position_msg.pose.pose._position.y=self.trajectoryArray[len(self.trajectoryArray)-1][1,3]
+            self.position_publisher_.publish(position_msg)
             # self.depth = []
             # self.image_left = []
             # self.image_plus1 = []
