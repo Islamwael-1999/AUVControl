@@ -13,6 +13,7 @@
 #include <Eigen/Core>
 
 
+
 #define M_PI 3.14159265358979323846
 
     using Vector24d = Eigen::Matrix<double, 24, 1>;
@@ -31,30 +32,35 @@ using MatrixXd = Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>;
 class SubscriberNode : public rclcpp::Node
 {
 public:
+  std::string robot_name="swift";
   bool isInitialised() const { if(IMU_init && DVL_init && Pressure_init)return true; else return false ;}
   SubscriberNode() : Node("subscriber")
   {
                                                                 //      topic name        queue size
-    IMU_subscriber_ = this->create_subscription<sensor_msgs::msg::Imu>("/rexrov/imu",     100,
+    IMU_subscriber_ = this->create_subscription<sensor_msgs::msg::Imu>("/"+robot_name+"/imu",     100,
                                                                        //                 callback function           number of parameters
                                                                        std::bind(&SubscriberNode::callbackIMU, this, std::placeholders::_1));
     RCLCPP_INFO(this->get_logger(), "subscriber IMU initialized");
 
+    // DVL_subscriber_ = this->create_subscription<geometry_msgs::msg::TwistWithCovarianceStamped>("/"+robot_name+"/dvl_twist", 100,
+    //                                                                                             std::bind(&SubscriberNode::callbackDVL, this, std::placeholders::_1));
 
-    DVL_subscriber_ = this->create_subscription<geometry_msgs::msg::TwistWithCovarianceStamped>("/rexrov/dvl_twist", 100,
-                                                                                                std::bind(&SubscriberNode::callbackDVL, this, std::placeholders::_1));
+    // RCLCPP_INFO(this->get_logger(), "subscriber DVL initialized");
 
-    RCLCPP_INFO(this->get_logger(), "subscriber DVL initialized");
+    Pressure_subscriber_ = this->create_subscription<sensor_msgs::msg::FluidPressure>("/"+robot_name+"/pressure", 100,
 
-    Pressure_subscriber_ = this->create_subscription<sensor_msgs::msg::FluidPressure>("/rexrov/pressure", 100,
-
-                                                                                        std::bind(&SubscriberNode::callbackPressure, this, std::placeholders::_1));
+                                                                                      std::bind(&SubscriberNode::callbackPressure, this, std::placeholders::_1));
     RCLCPP_INFO(this->get_logger(), "subscriber Pressure initialized");
 
     Truth_subscriber_ = this->create_subscription<gazebo_msgs::msg::ModelStates>("/gazebo/model_states", 100,
 
                                                                                 std::bind(&SubscriberNode::callbackGroundTruth, this, std::placeholders::_1));
     RCLCPP_INFO(this->get_logger(), "subscriber ground truth initialized");
+    
+    VO_subscriber_ = this->create_subscription<nav_msgs::msg::Odometry>("VO_position", 100,
+
+                                                                                std::bind(&SubscriberNode::callbackVO, this, std::placeholders::_1));
+    RCLCPP_INFO(this->get_logger(), "subscriber VO initialized");
 
     State_publisher_ = this->create_publisher<nav_msgs::msg::Odometry>("/kalmen_filter/state", 100);
 
@@ -80,7 +86,7 @@ public:
     
     request->state.pose.position.set__y(py);
     request->state.pose.position.set__z(pz);
-    request->state.set__name("submarine_z");
+    request->state.set__name("submarine_" + robot_name);
     tf2::Quaternion Q;
 
     Q.setRPY(roll,pitch,yaw);
@@ -675,6 +681,76 @@ protected:
      
     }
     }
+void callbackVO(const nav_msgs::msg::Odometry::SharedPtr msg)
+  {
+    
+    // RCLCPP_INFO(this->get_logger(), "DVL linear velocity in x: [%f], y: [%f], z: [%f]",
+    //             msg->twist.twist.linear.x,
+    //             msg->twist.twist.linear.y,
+    //             msg->twist.twist.linear.z);
+
+    if (isInitialised())
+    {
+
+      // state.twist.twist.linear.set__x(msg->twist.twist.linear.x);
+      // state.twist.twist.linear.set__y(msg->twist.twist.linear.y);
+      // state.twist.twist.linear.set__z(msg->twist.twist.linear.z);
+
+      VectorXd current_state = getState();
+      MatrixXd current_cov = getCov();
+   
+
+      VectorXd z = VectorXd::Zero(2,1);
+      MatrixXd H = MatrixXd::Zero(2, 12);
+      MatrixXd R = MatrixXd::Zero(2,2);
+
+      z <<msg->pose.pose.position.x,
+          msg->pose.pose.position.y;
+
+      // std::cout << "vz        reading:" << msg->twist.twist.linear.z << "\n";
+      // std::cout << "vy        reading:" << msg->twist.twist.linear.y << "\n";
+      // std::cout << "vx        reading:" << msg->twist.twist.linear.x << "\n";
+
+      H(0, 0)  = 1;
+      H(1, 1)  = 1;
+
+ 
+
+      R(0, 0) = GPS_POS_STD * GPS_POS_STD;
+      R(1, 1) = GPS_POS_STD * GPS_POS_STD;
+ 
+
+      VectorXd z_hat = H * current_state;
+      VectorXd y = z - z_hat;
+      MatrixXd S = H * current_cov * H.transpose() + R;
+      MatrixXd K = current_cov * H.transpose() * S.inverse();
+
+      current_state = current_state + K * y;
+      current_cov = (MatrixXd::Identity(12, 12) - K * H) * current_cov;
+
+      setState(current_state);
+      setCov(current_cov);
+  
+    }
+    else
+    {
+
+      VectorXd current_state = getState();
+      MatrixXd current_cov = getCov();
+
+      current_state(3) = 0 ;
+      current_state(4) = 0 ;
+      current_state(5) = 0 ;
+
+    
+
+      setState(current_state);
+      setCov(current_cov);
+     
+      DVL_init = true;
+     
+    }
+    }
   void callbackPressure(const sensor_msgs::msg::FluidPressure::SharedPtr msg)
   {
 
@@ -742,39 +818,39 @@ protected:
   void callbackGroundTruth(const gazebo_msgs::msg::ModelStates::SharedPtr msg)
   {
       tf2::Quaternion q(
-          msg->pose[3].orientation.x,
-          msg->pose[3].orientation.y,
-          msg->pose[3].orientation.z,
-          msg->pose[3].orientation.w);
+          msg->pose[7].orientation.x,
+          msg->pose[7].orientation.y,
+          msg->pose[7].orientation.z,
+          msg->pose[7].orientation.w);
       tf2::Matrix3x3 m(q);
       double roll, pitch, yaw;
       m.getRPY(roll, pitch, yaw);
 
-      x_position_error = state_vector(0) -        msg->pose[3].position.x;
-      y_position_error = state_vector(1) -        msg->pose[3].position.y;
-      z_position_error = state_vector(2) -        msg->pose[3].position.z;
+      x_position_error = state_vector(0) -        msg->pose[7].position.x;
+      y_position_error = state_vector(1) -        msg->pose[7].position.y;
+      z_position_error = state_vector(2) -        msg->pose[7].position.z;
       x_orientation_error = state_vector(6) -     roll;
       y_orientation_error = state_vector(7) -     pitch;
       z_orientation_error = state_vector(8) -     yaw;
-      x_linear_velocity_error = state_vector(3) - msg->twist[3].linear.x;
-      y_linear_velocity_error = state_vector(4) - msg->twist[3].linear.y;
-      z_linear_velocity_error = state_vector(5) - msg->twist[3].linear.z;
-      x_linear_angular_error = state_vector(9) -  msg->twist[3].angular.x;
-      y_linear_angular_error = state_vector(10) - msg->twist[3].angular.y;
-      z_linear_angular_error = state_vector(11) - msg->twist[3].angular.z;
+      x_linear_velocity_error = state_vector(3) - msg->twist[7].linear.x;
+      y_linear_velocity_error = state_vector(4) - msg->twist[7].linear.y;
+      z_linear_velocity_error = state_vector(5) - msg->twist[7].linear.z;
+      x_linear_angular_error = state_vector(9) -  msg->twist[7].angular.x;
+      y_linear_angular_error = state_vector(10) - msg->twist[7].angular.y;
+      z_linear_angular_error = state_vector(11) - msg->twist[7].angular.z;
 
-      real_x_position = msg->pose[3].position.x;
-      real_y_position = msg->pose[3].position.y;
-      real_z_position = msg->pose[3].position.z;
+      real_x_position = msg->pose[7].position.x;
+      real_y_position = msg->pose[7].position.y;
+      real_z_position = msg->pose[7].position.z;
       real_x_orientation = roll;
       real_y_orientation = pitch;
       real_z_orientation = yaw;
-      real_x_linear_velocity = msg->twist[3].linear.x;
-      real_y_linear_velocity = msg->twist[3].linear.y;
-      real_z_linear_velocity = msg->twist[3].linear.z;
-      real_x_linear_angular = msg->twist[3].angular.x;
-      real_y_linear_angular = msg->twist[3].angular.y;
-      real_z_linear_angular = msg->twist[3].angular.z;
+      real_x_linear_velocity = msg->twist[7].linear.x;
+      real_y_linear_velocity = msg->twist[7].linear.y;
+      real_z_linear_velocity = msg->twist[7].linear.z;
+      real_x_linear_angular = msg->twist[7].angular.x;
+      real_y_linear_angular = msg->twist[7].angular.y;
+      real_z_linear_angular = msg->twist[7].angular.z;
 
 
   }
@@ -879,7 +955,9 @@ protected:
  // myQuaternion.setRPY(state_vector(6), state_vector(7), state_vector(8));
 
  // myQuaternion = myQuaternion.normalize();
-
+ state.header.frame_id = "world";
+ state.child_frame_id = "swift/base_link";
+ state.header.stamp = this->get_clock()->now();
  State_publisher_->publish(state);
   }
 
@@ -920,6 +998,7 @@ double real_z_linear_angular  ;
   rclcpp::Subscription<geometry_msgs::msg::TwistWithCovarianceStamped>::SharedPtr DVL_subscriber_;
   rclcpp::Subscription<sensor_msgs::msg::FluidPressure>::SharedPtr Pressure_subscriber_;
   rclcpp::Subscription<gazebo_msgs::msg::ModelStates>::SharedPtr Truth_subscriber_;
+  rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr VO_subscriber_;
   rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr State_publisher_;
   rclcpp::TimerBase::SharedPtr timer_;
   rclcpp::TimerBase::SharedPtr timer_prediction_;
