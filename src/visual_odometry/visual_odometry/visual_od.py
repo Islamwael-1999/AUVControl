@@ -29,16 +29,17 @@ class VisualOdometry(Node):
         self.image_left = []
         self.image_plus1 = []
         self.depth = []
+        self.rov_name = "rexrov"
         camerainfo_qos = QoSProfile(
                                     depth=10, #number of messages in a buffer
                                     reliability=QoSReliabilityPolicy.BEST_EFFORT, #To make it always work at best
                                     durability=QoSDurabilityPolicy.VOLATILE)
-        self.groundTruth = self.create_subscription(Odometry,"/swift/pose_gt",self.odometry_receive_callback,10)
-        self.cameraLeftSubscriber = self.create_subscription(CameraInfo,"/swift/zed2/depth_cam_info_demo",self.camera_receive_callback,camerainfo_qos)
-        #self.imageSubscriber = self.create_subscription(Image,"/swift/zed2/image_demo",self.image_receive_callback,10)
-        #self.imageDepthSubscriber = self.create_subscription(Image,"/swift/zed2/depth_demo",self.imageDepth_receive_callback,10)
-        self.imageSubscriber = message_filters.Subscriber(self,Image,"/swift/zed2/image_demo")
-        self.imageDepthSubscriber = message_filters.Subscriber(self,Image,"/swift/zed2/depth_demo")
+        self.groundTruth = self.create_subscription(Odometry,"/"+self.rov_name+"/pose_gt",self.odometry_receive_callback,10)
+        self.cameraLeftSubscriber = self.create_subscription(CameraInfo,"/"+self.rov_name+"/zed2/depth_cam_info_demo",self.camera_receive_callback,camerainfo_qos)
+        #self.imageSubscriber = self.create_subscription(Image,"/"+self.rov_name+"/zed2/image_demo",self.image_receive_callback,10)
+        #self.imageDepthSubscriber = self.create_subscription(Image,"/"+self.rov_name+"/zed2/depth_demo",self.imageDepth_receive_callback,10)
+        self.imageSubscriber = message_filters.Subscriber(self,Image,"/"+self.rov_name+"/zed2/image_demo")
+        self.imageDepthSubscriber = message_filters.Subscriber(self,Image,"/"+self.rov_name+"/zed2/depth_demo")
         ts = message_filters.TimeSynchronizer([self.imageSubscriber, self.imageDepthSubscriber], queue_size=2)
         ts.registerCallback(self.synchronized_callback)
         self.get_logger().info('Subscriber init')
@@ -192,9 +193,9 @@ class VisualOdometry(Node):
             if len(self.depth) == 0 or len(self.image_left) ==0 or len(self.image_plus1)==0:
                 continue
 
-            #cv2.imshow("img_left",self.image_left)
+            # cv2.imshow("img_left",self.image_left)
             #cv2.imshow("img_plus1",self.image_plus1)
-            #cv2.waitKey(1)
+            # cv2.waitKey(1)
 
             kp0, des0 = self.extract_features(self.image_left, detector)
             kp1, des1 = self.extract_features(self.image_plus1, detector)
