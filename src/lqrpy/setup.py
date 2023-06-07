@@ -20,7 +20,9 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            "LQRpy=lqrpy.lqrNode:main"
+            "LQRpy=lqrpy.lqrNode:main",
+            "Yolo_node=lqrpy.ros2_detect:main"
+          
         ],
     },
 )
