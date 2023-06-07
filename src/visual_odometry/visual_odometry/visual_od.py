@@ -15,6 +15,8 @@ import threading
 import time
 import message_filters
 from nav_msgs.msg import Odometry
+from matplotlib.animation import FuncAnimation
+import datetime
 
 
 class VisualOdometry(Node): 
@@ -54,8 +56,10 @@ class VisualOdometry(Node):
         self.depth.append(np.array(depth_img, dtype = np.float))
         if len(self.image_left)==0:
             self.image_left = cv_img
+            self.image_left = cv2.cvtColor(self.image_left,cv2.COLOR_BGR2GRAY)
         else:
             self.image_plus1 = cv_img
+            self.image_plus1 = cv2.cvtColor(self.image_plus1,cv2.COLOR_BGR2GRAY)
             time.sleep(0.3)
            
     def odometry_receive_callback(self,msg):
@@ -71,7 +75,7 @@ class VisualOdometry(Node):
         t = (t/t[3])[:3]
         return k,r,t
 
-    def extract_features(self, image , detector= 'sift' , mask = None):
+    def extract_features(self, image , detector, mask = None):
         if detector == 'sift':
             det = cv2.SIFT_create()
         elif detector == 'orb':
@@ -83,10 +87,10 @@ class VisualOdometry(Node):
 
         return kp , des
 
-    def match_features(self,des1, des2, matching='BF' , detector = 'sift', sort= False , k=2):
+    def match_features(self,des1, des2, matching='BF' , detector = "akaze" ,sort= False , k=2):
         if matching == 'BF':
             if detector == 'sift':
-                matcher = cv2.BFMatcher_create(cv2.NORM_L2, crossCheck=False) #intensities and image gradient
+                matcher = cv2.BFMatcher_create(cv2.NORM_L1, crossCheck=False) #intensities and image gradient
             elif detector == 'orb':
                 matcher = cv2.BFMatcher_create(cv2.NORM_HAMMING2, crossCheck=False) #binary keypoint
             elif detector == 'akaze':
@@ -109,27 +113,37 @@ class VisualOdometry(Node):
                 matches = sorted(matches , key =lambda x: x[0].distance)
         return matches
     
-    # def visualize_matches(self,image1, kp1, images2, kp2, match):
-    #     image_matches = cv2.drawMatches(image1, kp1, images2, kp2, match, None , flags=2)
-    #     plt.close()
-    #     plt.figure(figsize= (16,6), dpi= 100)
-    #     plt.imshow(image_matches)
-    #     plt.pause(5)
+    def visualize_matches(self,image1, kp1, images2, kp2, match):
+        image_matches = cv2.drawMatches(image1, kp1, images2, kp2, match, None , flags=2)
+        plt.close()
+        plt.figure(figsize= (16,6), dpi= 100)
+        plt.imshow(image_matches)
+        plt.pause(5)
 
-    def filter_matches_distance(self,detector, matches, dist_threshold = 0.45):
+    def filter_matches_distance(self,detector, matches, dist_threshold = 0.375):
         filtered_matches = []
+        counting = 0
         if detector == 'akaze':
             for m in matches:
-                if m.distance <= 21:
+                #print(m.distance)
+                if m.distance <= 30:
+                    counting = counting+1
                     filtered_matches.append(m)
+            print("Length of matches = "+str(len(matches)))
+            print("Matches less than 25 = "+ str(counting))
+            
         else:   
             for m, n in matches:
                 if m.distance <= dist_threshold * n.distance:
+                    counting = counting + 1
                     filtered_matches.append(m)
+                
+            print("Length of matches = "+str(len(matches)))
+            print("Matches after filter = "+ str(counting))
         
         return filtered_matches
 
-    def estimate_motion(self,matches, kp1, kp2, k, depth1, max_depth=20):
+    def estimate_motion(self,matches, kp1, kp2, k, depth1, max_depth=200):
     
         rmat = np.eye(3)
         tvec = np.zeros((3,1))
@@ -159,7 +173,7 @@ class VisualOdometry(Node):
         
         image1_points = np.delete(image1_points, delete, 0)
         image2_points = np.delete(image2_points, delete, 0)
-        if len(image2_points)<10 or len(object_points)<10:
+        if len(image2_points)<40 or len(object_points)<40:
             return None,None
 
         #_, rvec, tvec, inliers = cv2.solvePnPRansac(object_points, image2_points, k, None,useExtrinsicGuess=True,reprojectionError=5,confidence=0.95)
@@ -174,8 +188,7 @@ class VisualOdometry(Node):
         rmat = cv2.Rodrigues(rvec)[0] #changes from matrix to vector
 
         return rmat, tvec
-
-    def visual_odometry(self,detector = 'akaze', matching = 'BF', filter_match_distance= 0.45):
+    def visual_odometry(self,detector = 'sift', matching = 'BF', filter_match_distance= 0.425):
         time.sleep(0.1)
         while self.P[0][0] == 0 and (self.x==0 or self.y==0 or self.z==0):
             pass
@@ -212,6 +225,7 @@ class VisualOdometry(Node):
                 matches = self.filter_matches_distance(detector,matches_unfilt, filter_match_distance)
             else:
                 matches = matches_unfilt
+            #self.visualize_matches(self.image_left,kp0,self.image_plus1,kp1,matches)
 
             rmat, tvec = self.estimate_motion(matches, kp0, kp1, k, self.depth)
             if tvec is None:
@@ -233,6 +247,7 @@ class VisualOdometry(Node):
             print("y = "+ str(self.trajectoryArray[len(self.trajectoryArray)-1][1,3]))
             print("z = "+ str(self.trajectoryArray[len(self.trajectoryArray)-1][2,3]))
             print("len of depth array = " + str(len(self.depth)))
+            print("len of matches = "+ str(len(matches)))
             #print("shape of image = " + str(self.image_left.shape))
             #print("shape of image plus 1 = " + str(self.image_plus1.shape))
             print("Error in x = " + str(abs(self.x - self.trajectoryArray[len(self.trajectoryArray)-1][0,3])))

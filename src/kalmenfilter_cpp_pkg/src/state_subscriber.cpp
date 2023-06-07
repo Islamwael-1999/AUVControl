@@ -15,7 +15,7 @@
 
 
 #define M_PI 3.14159265358979323846
-#define AUV_pose_index 2
+#define AUV_pose_index 30
     using Vector24d = Eigen::Matrix<double, 24, 1>;
 using Vector12d = Eigen::Matrix<double, 12, 1>;
 using Vector6d = Eigen::Matrix<double, 6, 1>;
@@ -33,7 +33,6 @@ class SubscriberNode : public rclcpp::Node
 {
 public:
   std::string robot_name="rexrov";
-
   bool isInitialised() const { if(IMU_init && DVL_init && Pressure_init)return true; else return false ;}
   SubscriberNode() : Node("subscriber")
   {
