@@ -18,6 +18,7 @@ SENSOR_FUSION_STATE = False
 MODELNAME = ''
 
 
+
 class LQR_node(Node):
     def __init__(self, modelname):
 
@@ -50,7 +51,6 @@ class LQR_node(Node):
     def nextStateReceiveServiceCallBack(self, request, response):
         self.nextState = self.ExtractModelState(request.model_state)
         response.success = True
-        self.get_logger().info("New State recieved")
         return response
 
     def ExtractOdometryState(self, state):
@@ -180,12 +180,12 @@ class LQR_node(Node):
 
             if MODELNAME == 'swift':
                 self.Q = np.diag([
-                    200,    # x
-                    2000,    # y
-                    600,    # z
+                    100,    # x
+                    100,    # y
+                    400,    # z
                     1,    # roll
                     1,    # pitch
-                    1500,   # yaw
+                    800,   # yaw
                     1,      # x'
                     1,      # y'
                     1,      # z'
@@ -195,12 +195,12 @@ class LQR_node(Node):
                 ])
 
                 self.R = np.diag([
-                    1,   # Force x
-                    .1,   # Force y
-                    1,   # Force z
+                    10,   # Force x
+                    10,   # Force y
+                    10,   # Force z
                     1,   # Roll Moment
                     1,   # Pitch Moment
-                    1   # Yaw   Moment
+                    0.5   # Yaw   Moment
                 ])
             else:
                 self.Q = np.diag([
@@ -260,7 +260,7 @@ class LQR_node(Node):
             print("\nCurrent State:\nx:",
                   globalState[0], "\ny:", globalState[1], "\nz:", globalState[2], '\nYaw:', globalState[5])
             print("\nNext Point:\nx:",
-                  self.nextState[0], "\ny:", self.nextState[1], '\nYaw:', self.nextState[5])
+                  self.nextState[0], "\ny:", self.nextState[1],'\nz:',self.nextState[2] ,'\nYaw:', self.nextState[5])
             print('\nError x', error[0], '\nError y', error[1], '\nError z', error[2],
                   '\nError roll', error[3], '\nError Pitch', error[4], '\nError Yaw', error[5])
             print('\nForce x', u[0], '\nForce y ', u[1], '\nForce z', u[2],
