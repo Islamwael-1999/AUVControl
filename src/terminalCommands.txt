@@ -1,0 +1,29 @@
+ros2 launch uuv_gazebo_worlds ocean_waves.launch
+ros2 launch uuv_descriptions upload_rexrov.launch mode:=default x:=0 y:=0 z:=-10 namespace:=rexrov
+ros2 launch uuv_control_cascaded_pid joy_velocity.launch uuv_name:=rexrov model_name:=rexrov joy_id:=0
+
+
+ros2 launch uuv_thruster_manager thruster_manager.launch 'model_name:=rexrov'
+
+
+ros2 run lqrpy LQRpy 
+
+killall gzserver
+
+
+
+Ros2 Setnext State Service Call Terminal Command :
+ros2 service call /control/set_next_state gazebo_msgs/srv/SetModelState '{model_state: { model_name: rexrov, pose: { position: { x: 0.3, y: 0.2 ,z: 0 }, orientation: {x: 0, y: 0.491983115673, z: 0, w: 0.870604813099 } }, twist: { linear: {x: 0.0 , y: 0 ,z: 0 } , angular: { x: 0.0 , y: 0 , z: 0.0 } } , reference_frame: world } }'
+
+
+ros2 service call /setWayPoint auv_interfaces/srv/Waypoint '{point : {x: 5.0,y: 5.0, z: -4.0, yaw: 1.5, steering: True}}'
+
+
+ros2 service call /setAngle auv_interfaces/srv/Waypoint '{point : {x: 0.0,y: 0.0, z: 0, yaw: 2.5, steering: True}}'
+
+
+ros2 run kalmenfilter_cpp_pkg state_subscriber 
+
+ros2 run trajectory_planning dubinsPath 
+
+
