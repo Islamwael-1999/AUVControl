@@ -12,7 +12,8 @@ import math
 
 from auv_interfaces.srv import Waypoint
 
-SENSOR_FUSION_STATE = False
+SENSOR_FUSION_STATE = True
+MODELNUMBER = 30
 
 
 class TrajectoryPlan(Node):
@@ -132,7 +133,7 @@ class TrajectoryPlan(Node):
         # Extracting Global State
         # Position:
 
-        pos = state.pose[3]  # ModelStates Message
+        pos = state.pose[MODELNUMBER]  # ModelStates Message
         position = pos.position
         xpos, ypos, zpos = position.x, position.y, position.z
 
@@ -143,7 +144,7 @@ class TrajectoryPlan(Node):
             [quat.w, quat.x, quat.y, quat.z])
 
         # Linear Velocities
-        twist = state.twist[3]  # ModelStates Message
+        twist = state.twist[MODELNUMBER]  # ModelStates Message
         linear = twist.linear
 
         vx, vy, vz = linear.x, linear.y, linear.z
