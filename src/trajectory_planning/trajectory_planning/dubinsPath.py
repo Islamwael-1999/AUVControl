@@ -12,7 +12,7 @@ import math
 
 from auv_interfaces.srv import Waypoint
 
-SENSOR_FUSION_STATE = False
+SENSOR_FUSION_STATE = True
 MODELNUMBER = 30
 
 

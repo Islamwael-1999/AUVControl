@@ -11,7 +11,7 @@ class VisualOdometry(Node):
         super().__init__('Node')
         #print('HIIIIIIIIIIIIIIIIIIIi')
         self.get_logger().info('Node init')
-        self.imageSubscriber = self.create_subscription(Image,"/rexrov/rexrov/camera/image_raw",self.image_receive_callback,10)
+        self.imageSubscriber = self.create_subscription(Image,"/rexrov/zed_rgb/image_raw",self.image_receive_callback,10)
         #self.imageLeftSubscriber = self.create_subscription(Image,"/rexrov/rexrov/cameraleft/image_raw",self.imageleft_receive_callback,10)
         #self.imageRightSubscriber = self.create_subscription(Image,"/rexrov/rexrov/cameraright/image_raw",self.imageright_receive_callback,10)
         self.i = 0
@@ -34,7 +34,7 @@ class VisualOdometry(Node):
             self.flag = 0
         elif key == ord("r"):
             #self.out = cv2.VideoWriter('output{}.avi'.format(self.i), cv2.VideoWriter_fourcc(*'MJPG'), 10, (768,492))
-            self.out = cv2.VideoWriter('output{}.avi'.format(self.i), cv2.VideoWriter_fourcc('F','M','P','4'), 10, (768,492))
+            self.out = cv2.VideoWriter('output{}.avi'.format(self.i), cv2.VideoWriter_fourcc('F','M','P','4'), 10, (640,640))
             self.get_logger().info("Record started")
             self.flag = 1
         if self.flag == 1:
@@ -43,15 +43,15 @@ class VisualOdometry(Node):
         
         
 
-    def imageleft_receive_callback(self,img):
-        cv_img = self.bridge.imgmsg_to_cv2(img,desired_encoding="bgr8")
-        cv2.imshow("left",cv_img)
-        cv2.waitKey(3)
+    # def imageleft_receive_callback(self,img):
+    #     cv_img = self.bridge.imgmsg_to_cv2(img,desired_encoding="bgr8")
+    #     cv2.imshow("left",cv_img)
+    #     cv2.waitKey(3)
 
-    def imageright_receive_callback(self,img):
-        cv_img = self.bridge.imgmsg_to_cv2(img,desired_encoding="bgr8")
-        cv2.imshow("right",cv_img)
-        cv2.waitKey(3)
+    # def imageright_receive_callback(self,img):
+    #     cv_img = self.bridge.imgmsg_to_cv2(img,desired_encoding="bgr8")
+    #     cv2.imshow("right",cv_img)
+    #     cv2.waitKey(3)
  
 
 def main(args=None):

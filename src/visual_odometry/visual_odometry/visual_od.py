@@ -15,8 +15,7 @@ import threading
 import time
 import message_filters
 from nav_msgs.msg import Odometry
-from matplotlib.animation import FuncAnimation
-import datetime
+import csv
 
 
 class VisualOdometry(Node): 
@@ -60,7 +59,7 @@ class VisualOdometry(Node):
         else:
             self.image_plus1 = cv_img
             self.image_plus1 = cv2.cvtColor(self.image_plus1,cv2.COLOR_BGR2GRAY)
-            time.sleep(0.3)
+            time.sleep(0.8)
            
     def odometry_receive_callback(self,msg):
         self.x = msg.pose.pose.position.x
@@ -202,6 +201,11 @@ class VisualOdometry(Node):
         self.trajectoryArray.append(T_tot[:3, :])
         #print(self.P)
         k, r, t = self.decompose_projection_matrix(self.P)
+        # with open('visualise1.csv', 'x', newline='') as file:
+        #     writer = csv.writer(file)
+        #     field = ["errorX","errorY","errorZ","estimatedX","estimatedY","estimatedZ","actualX","actualY","actualZ","PercenterrorX","PercenterrorY","PercenterrorZ","timediff"]
+        #     writer.writerow(field)
+        start = time.time()
         while True:
             if len(self.depth) == 0 or len(self.image_left) ==0 or len(self.image_plus1)==0:
                 continue
@@ -246,6 +250,17 @@ class VisualOdometry(Node):
             print("x = "+ str(self.trajectoryArray[len(self.trajectoryArray)-1][0,3]))
             print("y = "+ str(self.trajectoryArray[len(self.trajectoryArray)-1][1,3]))
             print("z = "+ str(self.trajectoryArray[len(self.trajectoryArray)-1][2,3]))
+            end = time.time()
+            diff = end - start
+            errorX = abs(self.x - self.trajectoryArray[len(self.trajectoryArray)-1][0,3])
+            errorY = abs(self.y - self.trajectoryArray[len(self.trajectoryArray)-1][1,3])
+            errorZ = abs(self.z - self.trajectoryArray[len(self.trajectoryArray)-1][2,3])
+            estimatedX = self.trajectoryArray[len(self.trajectoryArray)-1][0,3]
+            estimatedY = self.trajectoryArray[len(self.trajectoryArray)-1][1,3]
+            estimatedZ = self.trajectoryArray[len(self.trajectoryArray)-1][2,3]
+            # with open('visualise1.csv', 'a', newline='') as file:
+            #     writer = csv.writer(file)
+            #     writer.writerow([errorX,errorY,errorZ,estimatedX,estimatedY,estimatedZ,self.x,self.y,self.z,(errorX/self.x)*100,(errorY/self.y)*100,(errorZ/self.z)*100,diff])
             print("len of depth array = " + str(len(self.depth)))
             print("len of matches = "+ str(len(matches)))
             #print("shape of image = " + str(self.image_left.shape))

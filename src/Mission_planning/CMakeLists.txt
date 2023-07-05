@@ -20,6 +20,7 @@ find_package(behaviortree_cpp_v3 REQUIRED)
 find_package(gazebo_msgs REQUIRED)
 find_package(tf2 REQUIRED)
 find_package(nav_msgs REQUIRED)
+find_package(auv_interfaces REQUIRED)
 
 
 add_executable(set_waypoint src/set_waypoint.cpp )
@@ -32,7 +33,7 @@ add_executable(mission_execute src/mission_execute.cpp )
 add_executable(behaviour_2 src/behaviour_2.cpp )
 
 ament_target_dependencies( set_waypoint  uuv_control_msgs tf2 gazebo_msgs behaviortree_cpp_v3 rclcpp )
-ament_target_dependencies( set_waypoint_1  uuv_control_msgs nav_msgs tf2 gazebo_msgs behaviortree_cpp_v3 rclcpp )
+ament_target_dependencies( set_waypoint_1  auv_interfaces uuv_control_msgs nav_msgs tf2 gazebo_msgs behaviortree_cpp_v3 rclcpp )
 ament_target_dependencies( mission_execute  uuv_control_msgs tf2 gazebo_msgs behaviortree_cpp_v3 rclcpp )
 ament_target_dependencies( behaviour_2  uuv_control_msgs tf2 gazebo_msgs behaviortree_cpp_v3 rclcpp )
 

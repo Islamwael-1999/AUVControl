@@ -14,7 +14,7 @@ import numpy as np
 from lqrpy.ModelMatercies import ModelMatercies
 from lqrpy.LQR import LQR
 
-SENSOR_FUSION_STATE = False
+SENSOR_FUSION_STATE = True
 MODELNAME = ''
 MODELNUMBER = 30
 
